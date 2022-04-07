@@ -2,6 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::process::Command;
+use std::thread;
+use std::time;
 
 use serde::Deserialize;
 
@@ -27,17 +29,24 @@ fn main() {
     println!("config file path:{}", config_file_path);
 
     let config = load_config(config_file_path);
-    println!("{:?}", config);
+    // println!("{:?}", config);
     run_all_job(config);
 
     println!("The End");
 }
 
 fn run_all_job(config: Config) {
-    for job in config.jobs {
-        println!("name {} cmd {}, desc {}", job.name, job.cmd, job.desc);
-        // let cmd = &config.jobs[1].cmd;
-        run_cmd(&job.cmd);
+    let delay = time::Duration::from_secs(5);
+
+    loop{
+        for job in config.jobs.iter().clone() {
+            println!("name {} cmd {}, desc {}", job.name, job.cmd, job.desc);
+            // let cmd = &config.jobs[1].cmd;
+            run_cmd(&job.cmd);
+        }
+
+        println!("sleeping for some sec ");
+        thread::sleep(delay);
     }
 }
 
