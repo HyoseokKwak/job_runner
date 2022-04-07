@@ -1,0 +1,8 @@
+{
+  "jobs": [{
+    "name" : "name_1",
+    "desc" : "name_1_desc",
+    "cmd" : "C:/Users/hyose/OneDrive/sync/tiny/init-scripts/home/chceck_desktop_alive.cmd"
+  }
+  ]
+}
