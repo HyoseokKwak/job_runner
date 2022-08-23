@@ -58,20 +58,19 @@ fn run_all_job_v2(config: Config) {
 
     let mut last_scheduled_min: u32 = 100;
 
-    let mut job_queue: Vec<ScheduledJob> = Vec::new();
-
     let mut job_queue_map = HashMap::new();
 
     loop {
         let now = chrono::offset::Local::now();
-        let minute_value = now.minute();
-        println!("now min {}", minute_value);
+        let now_minute = now.minute();
+        let now_hour = now.hour();
+        println!("now min {}", now_minute);
 
-        if last_scheduled_min == minute_value {
+        if last_scheduled_min == now_minute {
             thread::sleep(delay);
             continue;
         } else {
-            last_scheduled_min = minute_value;
+            last_scheduled_min = now_minute;
         }
 
         // schedule
@@ -84,59 +83,42 @@ fn run_all_job_v2(config: Config) {
             let ne = get_next_event(&job.crontab);
             match ne {
                 Some(x) => {
-                    // job_queue.push(sj);
-
                     let key = String::from(&job.name);
-                    if !job_queue_map.contains_key(&key) {
-                        println!(
-                            "next scheduled time: {}-{}-{} {}:{}",
-                            x.tm_year + 1900,
-                            x.tm_mon + 1,
-                            x.tm_mday,
-                            x.tm_hour,
-                            x.tm_min,
-                        );
-                        let sj = ScheduledJob { t: x, address: job };
-
-                        job_queue_map.insert(key, sj);
-                    }
+                    // if !job_queue_map.contains_key(&key) {
+                    println!(
+                        "next scheduled time: {}-{}-{} {}:{}",
+                        x.tm_year + 1900,
+                        x.tm_mon + 1,
+                        x.tm_mday,
+                        x.tm_hour,
+                        x.tm_min,
+                    );
+                    let sj = ScheduledJob { t: x, address: job };
+                    job_queue_map.insert(key, sj);
+                    // }
                 }
                 None => {}
             }
-            // let cmd = &config.jobs[1].cmd;
-            // run_cmd(&job.cmd);
         }
 
         let mut remove_keys: Vec<&str> = Vec::new();
 
         for (k, sj) in &job_queue_map {
             println!("schedule {}", sj.address.name);
-            println!("minute value {} tm_min {}", minute_value, sj.t.tm_min);
+            println!(
+                "now {}:{}, job schedule time {}:{}",
+                now_hour, now_minute, sj.t.tm_hour, sj.t.tm_min
+            );
 
-            if minute_value as i32 == sj.t.tm_min {
+            if now_minute as i32 == sj.t.tm_min && now_hour as i32 == sj.t.tm_hour {
                 run_cmd(&sj.address.cmd);
-                // job_queue.remove(i);
                 remove_keys.push(&sj.address.name);
             }
         }
 
-        // for (i, sj) in (&job_queue).iter().enumerate() {
-        //     println!("schedule {}", sj.address.name);
-        //     println!("minute value {} tm_min {}", minute_value, sj.t.tm_min);
-
-        //     if minute_value as i32 == sj.t.tm_min {
-        //         run_cmd(&sj.address.cmd);
-        //         // job_queue.remove(i);
-        //         remove_keys.push(&sj.address.name);
-        //     }
-        // }
-
         for k in remove_keys {
             job_queue_map.remove(k);
         }
-
-        // println!("sleeping for some sec");
-        // thread::sleep(delay);
     }
 }
 
